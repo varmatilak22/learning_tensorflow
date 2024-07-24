@@ -286,3 +286,105 @@ def calculate_results(y_true, y_pred):
                   "recall": model_recall,
                   "f1": model_f1}
   return model_results
+
+
+import random 
+import os
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import numpy as np
+  
+def predict_random_image(class_names,
+                         model,
+                         main_dir):
+  """
+  Function choose random class random image and predict the class using our
+  fine tune image classification model
+  """
+  random_class=random.choice(class_names)
+  print(random_class)
+  random_dir=os.path.join(main_dir,random_class)
+  print(random_dir)
+  randomimg=random.choice(os.listdir(random_dir))
+  print(randomimg)
+  random_img_path=os.path.join(random_dir,randomimg)
+  print(random_img_path)
+
+  img=mpimg.imread(random_img_path)
+  plt.imshow(img)
+  img=tf.image.resize(img,[224,224])
+  predicted_class=class_names[np.argmax(model.predict(tf.expand_dims(img,axis=0)))]
+  plt.title(f"Original Class:{random_class},Predicted Class:{predicted_class}")
+  plt.axis('off')
+
+def functional_model(IMG_SIZE,
+                     learning_rate,
+                     base_model):
+  """
+  This Build a functional API model which uses the pretrained model and combined it
+  Steps:
+  1. Input layer
+  2. Data AUgementation layer
+  3. BAse_model
+  4. Pooling layer
+  5. Output layer
+  6. COmbine the input with output
+  7. Compile the mdel
+  8. Fit the model
+  9. Return the model
+  """
+
+  input_layer=tf.keras.layers.Input(shape=IMG_SIZE+(3,))
+  x=data_aug(input_layer)
+  
+  base_model_1=base_model(include_top=False)
+  base_model_1.trainable=False
+
+  x=base_model_1(x,training=False)
+  x=GlobalAveragePooling2D()(x)
+  output_layer=Dense(10,activation='softmax')(x)
+
+  model=tf.keras.Model(input_layer,output_layer)
+  model.compile(loss='categorical_crossentropy',
+                optimizer=Adam(learning_rate=learning_rate),
+                metrics=['accuracy'])
+  return model
+
+from tensorflow.keras.layers import RandomFlip,RandomZoom,RandomRotation,RandomWidth,RandomHeight
+
+def create_data_aug():
+  """
+  Function will data augmentation layer
+  it contains various 
+  RandomFlip
+  RandomZoom
+  RandomRotation
+  RandomHeight
+  RandomWidth
+  The Names suggest what they do
+  """
+  data_aug=tf.keras.Sequential([
+    RandomFlip('horizontal'),
+    RandomZoom(0.2),
+    RandomRotation(0.2),
+    RandomWidth(0.2),
+    RandomHeight(0.2)
+    ],name='Data_Augmentation_Layer')
+  return data_aug
+
+def fine_tune_fit(train_data,
+                  test_data,
+                  epoch=5,
+                  dir_name='tensorflow_hub',
+                  exp_name='fine_tune'):
+  """
+  function fits the model
+  if majorly based on fine-tunning models which required frequent fits  
+  """
+  history=model_00.fit(train_data,
+                       epochs=epoch,
+                       steps_per_epoch=len(train_data),
+                       validation_data=test_data,
+                       validation_steps=int(0.25*len(test_data)),
+                       callbacks=[create_tensorboard_callback(dir_name=dir_name,
+                                                                               experiment_name=experiment_name)])
