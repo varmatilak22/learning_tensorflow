@@ -363,7 +363,7 @@ def create_data_aug():
   RandomWidth
   The Names suggest what they do
   """
-  data_aug=tf.keras.Sequential([
+  data_aug=tf.keras.models.Sequential([
     RandomFlip('horizontal'),
     RandomZoom(0.2),
     RandomRotation(0.2),
